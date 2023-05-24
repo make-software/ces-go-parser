@@ -16,7 +16,7 @@ go get github.com/make-software/go-ces-parser
 Here is an example of parsing CES events using `go-ces-parser` from a real Testnet deploy loaded
 with `casper-go-sdk`:
 
-```
+```go
 package main
 
 import (
