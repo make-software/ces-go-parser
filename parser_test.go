@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"ces-go-parser/utils/mocks"
+	"github.com/make-software/ces-go-parser/utils/mocks"
 )
 
 func TestEventParser(t *testing.T) {

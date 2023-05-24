@@ -26,7 +26,7 @@ import (
 
   "github.com/make-software/casper-go-sdk/casper"
 
-  ces "ces-go-parser"
+  "github.com/make-software/ces-go-parser"
 )
 
 func main() {

@@ -1,10 +1,10 @@
-module ces-go-parser
+module github.com/make-software/ces-go-parser
 
 go 1.19
 
 require (
 	github.com/golang/mock v1.6.0
-	github.com/make-software/casper-go-sdk v0.9.4
+	github.com/make-software/casper-go-sdk v0.9.6
 	github.com/stretchr/testify v1.8.2
 )
 
