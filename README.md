@@ -8,7 +8,7 @@ The library is built on top of the 'casper-go-sdk' and operates on types defined
 ## Install
 
 ``
-go get github.com/make-software/ces-event-parser
+go get github.com/make-software/go-ces-parser
 ``
 
 ## Usage
@@ -24,14 +24,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"casper-middleware/pkg/go-ces-parser"
-	"casper-middleware/pkg/sdk/casper"
+	"github.com/make-software/casper-go-sdk/casper"
+
+	ces "go-ces-parser"
 )
 
 func main() {
 	testnetNodeAddress := "<put testnet node address here>"
 	rpcClient := casper.NewRPCClient(casper.NewRPCHandler(testnetNodeAddress, http.DefaultClient))
-	
+
 	ctx := context.Background()
 	deployResult, err := rpcClient.GetDeploy(ctx, "19ee17d9e3b4c1527b433598e647b69aa9a153864eb12433489f99224bfc9442")
 	if err != nil {
@@ -75,7 +76,7 @@ Go CES Parser provides several public types and functions:
   - [`ParseEventNameAndData`](#ParseEventNameAndData)
 - [`ParseResult`](#ParseResult)
 - [`Schemas`](#Schemas)
-- [`Schema`](#Schema)
+- [`SchemaData`](#SchemaData)
 
 ### `Parser`
 
@@ -171,18 +172,18 @@ Value-object that represents a parse result. Contains error representing weather
 | `Error`  | `error`               | Parse result error |
 | `Event`  | [`ces.Event`](#Event) | ces Event          |
 
-### `Schema`
+### `SchemaData`
 
-Schema is slice of `PropertyDefinition` - value-object that represents an schema item.
+SchemaData is - value-object that represents an schema item.
 
-| Property   | Type            | Description                 |
-|------------|-----------------|-----------------------------|
-| `Property` | `string`        | Name of the schema property |
-| `Value`    | `casper.CLType` | casper CLType               |
+| Property    | Type            | Description       |
+|-------------|-----------------|-------------------|
+| `ParamName` | `string`        | Name of the param |
+| `ParamType` | `casper.CLType` | casper CLType     |
 
 ### `Schemas`
 
-Schemas represent a map of event name and its Schema.
+Schemas represent a map of event name and list of SchemaData.
 
 ## Tests
 
