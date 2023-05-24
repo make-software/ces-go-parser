@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go-ces-parser/utils/mocks"
+	"ces-go-parser/utils/mocks"
 )
 
 func TestEventParser(t *testing.T) {
@@ -75,7 +75,7 @@ func TestEventParser(t *testing.T) {
 
 		var res casper.InfoGetDeployResult
 
-		data, err := os.ReadFile("./tests/fixtures/deploys/voting_created.json")
+		data, err := os.ReadFile("./utils/fixtures/deploys/voting_created.json")
 		assert.NoError(t, err)
 
 		err = json.Unmarshal(data, &res)

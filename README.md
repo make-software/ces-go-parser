@@ -1,6 +1,6 @@
-# Go CES Parser
+# CES Go Parser
 
-`go-ces-parser` parses contract-level events that follow
+`ces-go-parser` parses contract-level events that follow
 the [Casper Event Standard](https://github.com/make-software/casper-event-standard).
 
 The library is built on top of the 'casper-go-sdk' and operates on types defined by the SDK.
@@ -8,57 +8,57 @@ The library is built on top of the 'casper-go-sdk' and operates on types defined
 ## Install
 
 ``
-go get github.com/make-software/go-ces-parser
+go get github.com/make-software/ces-go-parser
 ``
 
 ## Usage
 
-Here is an example of parsing CES events using `go-ces-parser` from a real Testnet deploy loaded
+Here is an example of parsing CES events using `ces-go-parser` from a real Testnet deploy loaded
 with `casper-go-sdk`:
 
 ```go
 package main
 
 import (
-	"context"
-	"fmt"
-	"net/http"
+  "context"
+  "fmt"
+  "net/http"
 
-	"github.com/make-software/casper-go-sdk/casper"
+  "github.com/make-software/casper-go-sdk/casper"
 
-	ces "go-ces-parser"
+  ces "ces-go-parser"
 )
 
 func main() {
-	testnetNodeAddress := "<put testnet node address here>"
-	rpcClient := casper.NewRPCClient(casper.NewRPCHandler(testnetNodeAddress, http.DefaultClient))
+  testnetNodeAddress := "<put testnet node address here>"
+  rpcClient := casper.NewRPCClient(casper.NewRPCHandler(testnetNodeAddress, http.DefaultClient))
 
-	ctx := context.Background()
-	deployResult, err := rpcClient.GetDeploy(ctx, "19ee17d9e3b4c1527b433598e647b69aa9a153864eb12433489f99224bfc9442")
-	if err != nil {
-		panic(err)
-	}
+  ctx := context.Background()
+  deployResult, err := rpcClient.GetDeploy(ctx, "19ee17d9e3b4c1527b433598e647b69aa9a153864eb12433489f99224bfc9442")
+  if err != nil {
+    panic(err)
+  }
 
-	contractHash, err := casper.NewHash("e7062b42c9a22002fa3cd216debd605b7056ad180efb3c99555676f1a1e801e5")
-	if err != nil {
-		panic(err)
-	}
+  contractHash, err := casper.NewHash("e7062b42c9a22002fa3cd216debd605b7056ad180efb3c99555676f1a1e801e5")
+  if err != nil {
+    panic(err)
+  }
 
-	parser, err := ces.NewParser(rpcClient, []casper.Hash{contractHash})
-	if err != nil {
-		panic(err)
-	}
+  parser, err := ces.NewParser(rpcClient, []casper.Hash{contractHash})
+  if err != nil {
+    panic(err)
+  }
 
-	parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults[0].Result)
-	if err != nil {
-		panic(err)
-	}
-	for _, result := range parseResults {
-		if result.Error != nil {
-			panic(err)
-		}
-		fmt.Println(result.Event)
-	}
+  parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults[0].Result)
+  if err != nil {
+    panic(err)
+  }
+  for _, result := range parseResults {
+    if result.Error != nil {
+      panic(err)
+    }
+    fmt.Println(result.Event)
+  }
 }
 ```
 

@@ -1,4 +1,4 @@
-module go-ces-parser
+module ces-go-parser
 
 go 1.19
 
