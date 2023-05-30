@@ -3,13 +3,13 @@
 `ces-go-parser` parses contract-level events that follow
 the [Casper Event Standard](https://github.com/make-software/casper-event-standard).
 
-The library is built on top of the 'casper-go-sdk' and operates on types defined by the SDK.
+The library is built on top of the `casper-go-sdk` and operates on types defined by the SDK.
 
 ## Install
 
-``
+```bash
 go get github.com/make-software/ces-go-parser
-``
+```
 
 ## Usage
 
@@ -189,6 +189,6 @@ Schemas represent a map of event name and list of SchemaData.
 
 To run unit tests for the library, make sure you are in the root of the library:
 
-``
+```bash
 go test ./...
-``
+```
