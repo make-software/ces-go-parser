@@ -94,11 +94,30 @@ results
 
 **Example**
 
-```
-rpcClient := casper.NewRPCClient(casper.NewRPCHandler("http://localhost:11101/rpc", http.DefaultClient))
-contractHash, err := casper.NewHash("e7062b42c9a22002fa3cd216debd605b7056ad180efb3c99555676f1a1e801e5")
+```go
+package main
 
-parser, err := ces.NewParser(rpc, []casper.Hash{contractHash})
+import (
+	"net/http"
+
+	"github.com/make-software/casper-go-sdk/casper"
+
+	"github.com/make-software/ces-go-parser"
+)
+
+func main() {
+	rpcClient := casper.NewRPCClient(casper.NewRPCHandler("http://localhost:11101/rpc", http.DefaultClient))
+	contractHash, err := casper.NewHash("e7062b42c9a22002fa3cd216debd605b7056ad180efb3c99555676f1a1e801e5")
+	if err != nil {
+		panic(err)
+	}
+
+	parser, err := ces.NewParser(rpcClient, []casper.Hash{contractHash})
+	if err != nil {
+		panic(err)
+	}
+	_ = parser
+}
 ```
 
 #### `ParseExecutionResults`
@@ -159,6 +178,7 @@ Value-object that represents an event:
 
 | Property              | Type                          | Description               |
 |-----------------------|-------------------------------|---------------------------|
+| `Name`                | `string`                      | Event Name                |
 | `EventData`           | [`ces.EventData`](#EventData) | EventData                 |
 | `ContractHash`        | `casper.Hash`                 | Event ContractHash        |
 | `ContractPackageHash` | `casper.Hash`                 | Event ContractPackageHash |

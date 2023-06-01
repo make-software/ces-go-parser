@@ -20,7 +20,7 @@ type SchemaData struct {
 
 type Schemas map[EventName][]SchemaData
 
-func NewSchemasFromBytes(rawSchemas []byte) (map[EventName][]SchemaData, error) {
+func NewSchemasFromBytes(rawSchemas []byte) (Schemas, error) {
 	buf := bytes.NewBuffer(rawSchemas)
 	// For all the ces events schema for parsing CLType has next representation
 	cesEventCLTypeParsingSchema := cltype.Map{Key: cltype.String, Val: &cltype.List{ElementsType: &cltype.Tuple2{

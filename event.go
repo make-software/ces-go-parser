@@ -23,7 +23,7 @@ type Event struct {
 }
 
 // ParseEventNameAndData parse provided rawEvent according to event schema, return EventName and EventData
-func ParseEventNameAndData(eventHex string, schemas map[EventName][]SchemaData) (EventName, map[string]casper.CLValue, error) {
+func ParseEventNameAndData(eventHex string, schemas Schemas) (EventName, map[string]casper.CLValue, error) {
 	decoded, err := hex.DecodeString(eventHex)
 	if err != nil {
 		return "", nil, err
