@@ -10,8 +10,8 @@ github.com/golang/mock v1.6.0/go.mod h1:p6yTPP+5HYm5mzsMV8JkE6ZKdX+/wYM6Hr+Licev
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
-github.com/make-software/casper-go-sdk v0.9.6 h1:0Lk19hzAkot3PpjtxCGJOc/ytZt3Oi3embdMK1W4gM8=
-github.com/make-software/casper-go-sdk v0.9.6/go.mod h1:Znsqvm5ZGn3EiEjp2zXYDGwOlH828tLIBPfldcBl37U=
+github.com/make-software/casper-go-sdk v1.0.0 h1:1Jk5sEcg+/LVNqkougnXqv0w3cHqnXmgJVW6XpWh/vE=
+github.com/make-software/casper-go-sdk v1.0.0/go.mod h1:Znsqvm5ZGn3EiEjp2zXYDGwOlH828tLIBPfldcBl37U=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/shopspring/decimal v1.3.1 h1:2Usl1nmF/WZucqkFZhnfFYxxxu8LG21F6nPQBE5gKV8=

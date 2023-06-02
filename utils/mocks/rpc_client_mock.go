@@ -11,6 +11,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	rpc "github.com/make-software/casper-go-sdk/rpc"
 	types "github.com/make-software/casper-go-sdk/types"
+	keypair "github.com/make-software/casper-go-sdk/types/keypair"
 )
 
 // MockClient is a mock of Client interface.
@@ -49,6 +50,36 @@ func (m *MockClient) GetAccountBalance(ctx context.Context, stateRootHash, purse
 func (mr *MockClientMockRecorder) GetAccountBalance(ctx, stateRootHash, purseURef interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountBalance", reflect.TypeOf((*MockClient)(nil).GetAccountBalance), ctx, stateRootHash, purseURef)
+}
+
+// GetAccountInfoByBlochHash mocks base method.
+func (m *MockClient) GetAccountInfoByBlochHash(ctx context.Context, blockHash string, pub keypair.PublicKey) (rpc.StateGetAccountInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountInfoByBlochHash", ctx, blockHash, pub)
+	ret0, _ := ret[0].(rpc.StateGetAccountInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountInfoByBlochHash indicates an expected call of GetAccountInfoByBlochHash.
+func (mr *MockClientMockRecorder) GetAccountInfoByBlochHash(ctx, blockHash, pub interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountInfoByBlochHash", reflect.TypeOf((*MockClient)(nil).GetAccountInfoByBlochHash), ctx, blockHash, pub)
+}
+
+// GetAccountInfoByBlochHeight mocks base method.
+func (m *MockClient) GetAccountInfoByBlochHeight(ctx context.Context, blockHeight uint64, pub keypair.PublicKey) (rpc.StateGetAccountInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountInfoByBlochHeight", ctx, blockHeight, pub)
+	ret0, _ := ret[0].(rpc.StateGetAccountInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountInfoByBlochHeight indicates an expected call of GetAccountInfoByBlochHeight.
+func (mr *MockClientMockRecorder) GetAccountInfoByBlochHeight(ctx, blockHeight, pub interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountInfoByBlochHeight", reflect.TypeOf((*MockClient)(nil).GetAccountInfoByBlochHeight), ctx, blockHeight, pub)
 }
 
 // GetAuctionInfoByHash mocks base method.
@@ -202,10 +233,10 @@ func (mr *MockClientMockRecorder) GetDeploy(ctx, hash interface{}) *gomock.Call 
 }
 
 // GetDictionaryItem mocks base method.
-func (m *MockClient) GetDictionaryItem(ctx context.Context, stateRootHash, uref, key string) (rpc.StateGetItemResult, error) {
+func (m *MockClient) GetDictionaryItem(ctx context.Context, stateRootHash, uref, key string) (rpc.StateGetDictionaryResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDictionaryItem", ctx, stateRootHash, uref, key)
-	ret0, _ := ret[0].(rpc.StateGetItemResult)
+	ret0, _ := ret[0].(rpc.StateGetDictionaryResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -259,6 +290,51 @@ func (m *MockClient) GetEraInfoLatest(ctx context.Context) (rpc.ChainGetEraInfoR
 func (mr *MockClientMockRecorder) GetEraInfoLatest(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEraInfoLatest", reflect.TypeOf((*MockClient)(nil).GetEraInfoLatest), ctx)
+}
+
+// GetEraSummaryByHash mocks base method.
+func (m *MockClient) GetEraSummaryByHash(ctx context.Context, blockHash string) (rpc.ChainGetEraSummaryResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEraSummaryByHash", ctx, blockHash)
+	ret0, _ := ret[0].(rpc.ChainGetEraSummaryResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEraSummaryByHash indicates an expected call of GetEraSummaryByHash.
+func (mr *MockClientMockRecorder) GetEraSummaryByHash(ctx, blockHash interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEraSummaryByHash", reflect.TypeOf((*MockClient)(nil).GetEraSummaryByHash), ctx, blockHash)
+}
+
+// GetEraSummaryByHeight mocks base method.
+func (m *MockClient) GetEraSummaryByHeight(ctx context.Context, height uint64) (rpc.ChainGetEraSummaryResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEraSummaryByHeight", ctx, height)
+	ret0, _ := ret[0].(rpc.ChainGetEraSummaryResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEraSummaryByHeight indicates an expected call of GetEraSummaryByHeight.
+func (mr *MockClientMockRecorder) GetEraSummaryByHeight(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEraSummaryByHeight", reflect.TypeOf((*MockClient)(nil).GetEraSummaryByHeight), ctx, height)
+}
+
+// GetEraSummaryLatest mocks base method.
+func (m *MockClient) GetEraSummaryLatest(ctx context.Context) (rpc.ChainGetEraSummaryResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEraSummaryLatest", ctx)
+	ret0, _ := ret[0].(rpc.ChainGetEraSummaryResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEraSummaryLatest indicates an expected call of GetEraSummaryLatest.
+func (mr *MockClientMockRecorder) GetEraSummaryLatest(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEraSummaryLatest", reflect.TypeOf((*MockClient)(nil).GetEraSummaryLatest), ctx)
 }
 
 // GetPeers mocks base method.
@@ -351,6 +427,21 @@ func (mr *MockClientMockRecorder) GetStatus(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatus", reflect.TypeOf((*MockClient)(nil).GetStatus), ctx)
 }
 
+// GetValidatorChangesInfo mocks base method.
+func (m *MockClient) GetValidatorChangesInfo(ctx context.Context) (rpc.InfoGetValidatorChangesResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetValidatorChangesInfo", ctx)
+	ret0, _ := ret[0].(rpc.InfoGetValidatorChangesResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetValidatorChangesInfo indicates an expected call of GetValidatorChangesInfo.
+func (mr *MockClientMockRecorder) GetValidatorChangesInfo(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorChangesInfo", reflect.TypeOf((*MockClient)(nil).GetValidatorChangesInfo), ctx)
+}
+
 // PutDeploy mocks base method.
 func (m *MockClient) PutDeploy(ctx context.Context, deploy types.Deploy) (rpc.PutDeployResult, error) {
 	m.ctrl.T.Helper()
@@ -364,4 +455,34 @@ func (m *MockClient) PutDeploy(ctx context.Context, deploy types.Deploy) (rpc.Pu
 func (mr *MockClientMockRecorder) PutDeploy(ctx, deploy interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutDeploy", reflect.TypeOf((*MockClient)(nil).PutDeploy), ctx, deploy)
+}
+
+// QueryGlobalStateByBlockHash mocks base method.
+func (m *MockClient) QueryGlobalStateByBlockHash(ctx context.Context, blockHash, key string, path []string) (rpc.QueryGlobalStateResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryGlobalStateByBlockHash", ctx, blockHash, key, path)
+	ret0, _ := ret[0].(rpc.QueryGlobalStateResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryGlobalStateByBlockHash indicates an expected call of QueryGlobalStateByBlockHash.
+func (mr *MockClientMockRecorder) QueryGlobalStateByBlockHash(ctx, blockHash, key, path interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryGlobalStateByBlockHash", reflect.TypeOf((*MockClient)(nil).QueryGlobalStateByBlockHash), ctx, blockHash, key, path)
+}
+
+// QueryGlobalStateByStateHash mocks base method.
+func (m *MockClient) QueryGlobalStateByStateHash(ctx context.Context, stateRootHash, key string, path []string) (rpc.QueryGlobalStateResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryGlobalStateByStateHash", ctx, stateRootHash, key, path)
+	ret0, _ := ret[0].(rpc.QueryGlobalStateResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryGlobalStateByStateHash indicates an expected call of QueryGlobalStateByStateHash.
+func (mr *MockClientMockRecorder) QueryGlobalStateByStateHash(ctx, stateRootHash, key, path interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryGlobalStateByStateHash", reflect.TypeOf((*MockClient)(nil).QueryGlobalStateByStateHash), ctx, stateRootHash, key, path)
 }
