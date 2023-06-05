@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/make-software/casper-go-sdk/casper"
+	"github.com/make-software/casper-go-sdk/rpc"
 	"github.com/make-software/casper-go-sdk/types/key"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,8 @@ func TestEventParser(t *testing.T) {
 		assert.NoError(t, err)
 		eventSchemaUref, err := key.NewKey("uref-12263e86f497f42e405d5d1390aa3c1a8bfc35f3699fdc3be806a5cfe139dac9-007")
 		assert.NoError(t, err)
-		mockedClient.EXPECT().GetStateItem(context.Background(), "002596e815c7235dccf76358695de0088b4636ecb2473c12bb5ff0fbbb7ae94a", fmt.Sprintf("hash-%s", contractHashToParse.ToHex()), nil).Return(casper.StateGetItemResult{
+		rootHash := hash.String()
+		mockedClient.EXPECT().QueryGlobalStateByStateHash(context.Background(), &rootHash, fmt.Sprintf("hash-%s", contractHashToParse.ToHex()), nil).Return(rpc.QueryGlobalStateResult{
 			StoredValue: casper.StoredValue{
 				Contract: &casper.Contract{
 					ContractPackageHash: contractPackageHash,
@@ -61,8 +63,8 @@ func TestEventParser(t *testing.T) {
 		err = json.Unmarshal([]byte(fmt.Sprintf(`{"cl_type": "Any", "bytes": "%s"}`, schemaHex)), &arg)
 		require.NoError(t, err)
 
-		mockedClient.EXPECT().GetStateItem(context.Background(), "002596e815c7235dccf76358695de0088b4636ecb2473c12bb5ff0fbbb7ae94a", "uref-12263e86f497f42e405d5d1390aa3c1a8bfc35f3699fdc3be806a5cfe139dac9-007", nil).Return(
-			casper.StateGetItemResult{
+		mockedClient.EXPECT().QueryGlobalStateByStateHash(context.Background(), &rootHash, "uref-12263e86f497f42e405d5d1390aa3c1a8bfc35f3699fdc3be806a5cfe139dac9-007", nil).Return(
+			rpc.QueryGlobalStateResult{
 				StoredValue: casper.StoredValue{
 					CLValue: &arg,
 				},
@@ -116,10 +118,8 @@ func TestParseEventAndData(t *testing.T) {
 	err = json.Unmarshal([]byte(fmt.Sprintf(`{"cl_type": "Any", "bytes": "%s"}`, schemaHex)), &arg)
 	require.NoError(t, err)
 
-	hash, _ := casper.NewHash("002596e815c7235dccf76358695de0088b4636ecb2473c12bb5ff0fbbb7ae94a")
-	mockedClient.EXPECT().GetStateRootHashLatest(context.Background()).Return(casper.ChainGetStateRootHashResult{StateRootHash: hash}, nil)
-	mockedClient.EXPECT().GetStateItem(context.Background(), "002596e815c7235dccf76358695de0088b4636ecb2473c12bb5ff0fbbb7ae94a", fmt.Sprintf("hash-%s", contractHashToParse.ToHex()), []string{eventSchemaNamedKey}).Return(
-		casper.StateGetItemResult{
+	mockedClient.EXPECT().QueryGlobalStateByStateHash(context.Background(), nil, fmt.Sprintf("hash-%s", contractHashToParse.ToHex()), []string{eventSchemaNamedKey}).Return(
+		rpc.QueryGlobalStateResult{
 			StoredValue: casper.StoredValue{
 				CLValue: &arg,
 			},

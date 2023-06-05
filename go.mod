@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/golang/mock v1.6.0
-	github.com/make-software/casper-go-sdk v1.1.1-0.20230604194424-eed17e2db2a8
+	github.com/make-software/casper-go-sdk v1.1.1
 	github.com/stretchr/testify v1.8.2
 )
 

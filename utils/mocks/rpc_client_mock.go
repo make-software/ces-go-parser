@@ -37,11 +37,34 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// GetAccountBalance mocks base method.
-func (m *MockClient) GetAccountBalance(ctx context.Context, stateRootHash, purseURef string) (rpc.StateGetBalanceResult, error) {
+func (m *MockClient) GetAccountBalance(ctx context.Context, stateRootHash *string, purseURef string) (rpc.StateGetBalanceResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountBalance", ctx, stateRootHash, purseURef)
 	ret0, _ := ret[0].(rpc.StateGetBalanceResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (m *MockClient) GetDictionaryItem(ctx context.Context, stateRootHash *string, uref, key string) (rpc.StateGetDictionaryResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDictionaryItem", ctx, stateRootHash, uref, key)
+	ret0, _ := ret[0].(rpc.StateGetDictionaryResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (m *MockClient) GetStateItem(ctx context.Context, stateRootHash *string, key string, path []string) (rpc.StateGetItemResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStateItem", ctx, stateRootHash, key, path)
+	ret0, _ := ret[0].(rpc.StateGetItemResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (m *MockClient) QueryGlobalStateByStateHash(ctx context.Context, stateRootHash *string, key string, path []string) (rpc.QueryGlobalStateResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryGlobalStateByStateHash", ctx, stateRootHash, key, path)
+	ret0, _ := ret[0].(rpc.QueryGlobalStateResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -232,14 +255,6 @@ func (mr *MockClientMockRecorder) GetDeploy(ctx, hash interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeploy", reflect.TypeOf((*MockClient)(nil).GetDeploy), ctx, hash)
 }
 
-// GetDictionaryItem mocks base method.
-func (m *MockClient) GetDictionaryItem(ctx context.Context, stateRootHash, uref, key string) (rpc.StateGetDictionaryResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDictionaryItem", ctx, stateRootHash, uref, key)
-	ret0, _ := ret[0].(rpc.StateGetDictionaryResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
 
 // GetDictionaryItem indicates an expected call of GetDictionaryItem.
 func (mr *MockClientMockRecorder) GetDictionaryItem(ctx, stateRootHash, uref, key interface{}) *gomock.Call {
@@ -350,15 +365,6 @@ func (m *MockClient) GetPeers(ctx context.Context) (rpc.InfoGetPeerResult, error
 func (mr *MockClientMockRecorder) GetPeers(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPeers", reflect.TypeOf((*MockClient)(nil).GetPeers), ctx)
-}
-
-// GetStateItem mocks base method.
-func (m *MockClient) GetStateItem(ctx context.Context, stateRootHash, key string, path []string) (rpc.StateGetItemResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStateItem", ctx, stateRootHash, key, path)
-	ret0, _ := ret[0].(rpc.StateGetItemResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
 }
 
 // GetStateItem indicates an expected call of GetStateItem.
@@ -472,14 +478,6 @@ func (mr *MockClientMockRecorder) QueryGlobalStateByBlockHash(ctx, blockHash, ke
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryGlobalStateByBlockHash", reflect.TypeOf((*MockClient)(nil).QueryGlobalStateByBlockHash), ctx, blockHash, key, path)
 }
 
-// QueryGlobalStateByStateHash mocks base method.
-func (m *MockClient) QueryGlobalStateByStateHash(ctx context.Context, stateRootHash, key string, path []string) (rpc.QueryGlobalStateResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryGlobalStateByStateHash", ctx, stateRootHash, key, path)
-	ret0, _ := ret[0].(rpc.QueryGlobalStateResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
 
 // QueryGlobalStateByStateHash indicates an expected call of QueryGlobalStateByStateHash.
 func (mr *MockClientMockRecorder) QueryGlobalStateByStateHash(ctx, stateRootHash, key, path interface{}) *gomock.Call {
