@@ -159,12 +159,7 @@ func ParseEventMetadataFromTransform(transform casper.TransformKey) (EventMetada
 
 // FetchContractSchemasBytes accept contract hash to fetch stored contract schema
 func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byte, error) {
-	stateRootHash, err := p.casperClient.GetStateRootHashLatest(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	schemasURefValue, err := p.casperClient.GetStateItem(context.Background(), stateRootHash.StateRootHash.ToHex(), fmt.Sprintf("hash-%s", contractHash.ToHex()), []string{eventSchemaNamedKey})
+	schemasURefValue, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), nil, fmt.Sprintf("hash-%s", contractHash.ToHex()), []string{eventSchemaNamedKey})
 	if err != nil {
 		return nil, err
 	}
@@ -188,9 +183,10 @@ func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash) (map[s
 		return nil, err
 	}
 
+	stateRootString := stateRootHash.StateRootHash.ToHex()
 	contractsSchemas := make(map[string]ContractMetadata, len(contractHashes))
 	for _, hash := range contractHashes {
-		contractResult, err := p.casperClient.GetStateItem(context.Background(), stateRootHash.StateRootHash.ToHex(), fmt.Sprintf("hash-%s", hash), nil)
+		contractResult, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), &stateRootString, fmt.Sprintf("hash-%s", hash), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +200,7 @@ func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash) (map[s
 			return nil, err
 		}
 
-		schemas, err := LoadContractEventSchemas(p.casperClient, stateRootHash.StateRootHash.ToHex(), contractMetadata.EventsSchemaURef)
+		schemas, err := LoadContractEventSchemas(p.casperClient, stateRootString, contractMetadata.EventsSchemaURef)
 		if err != nil {
 			return nil, ErrFailedToParseContractEventSchema
 		}
@@ -258,7 +254,7 @@ func LoadContractMetadataWithoutSchema(contractResult casper.Contract) (Contract
 }
 
 func LoadContractEventSchemas(casperClient casper.RPCClient, stateRootHash string, eventSchemaUref casper.Uref) (Schemas, error) {
-	schemasURefValue, err := casperClient.GetStateItem(context.Background(), stateRootHash, eventSchemaUref.String(), nil)
+	schemasURefValue, err := casperClient.QueryGlobalStateByStateHash(context.Background(), &stateRootHash, eventSchemaUref.String(), nil)
 	if err != nil {
 		return nil, err
 	}
