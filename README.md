@@ -34,12 +34,12 @@ func main() {
   rpcClient := casper.NewRPCClient(casper.NewRPCHandler(testnetNodeAddress, http.DefaultClient))
 
   ctx := context.Background()
-  deployResult, err := rpcClient.GetDeploy(ctx, "19ee17d9e3b4c1527b433598e647b69aa9a153864eb12433489f99224bfc9442")
+  deployResult, err := rpcClient.GetDeploy(ctx, "c1bb9ae27877f5ecf4ef71307e7ee3c403bcace065565c3645b81ec0a9bc8978")
   if err != nil {
     panic(err)
   }
 
-  contractHash, err := casper.NewHash("e7062b42c9a22002fa3cd216debd605b7056ad180efb3c99555676f1a1e801e5")
+  contractHash, err := casper.NewHash("0640eb43bd95d5c88b799862bc9fb42d7a241f1a8aae5deaa03170a27ee8eeaa")
   if err != nil {
     panic(err)
   }
