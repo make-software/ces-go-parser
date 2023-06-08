@@ -20,45 +20,45 @@ with `casper-go-sdk`:
 package main
 
 import (
-  "context"
-  "fmt"
-  "net/http"
+	"context"
+	"fmt"
+	"net/http"
 
-  "github.com/make-software/casper-go-sdk/casper"
+	"github.com/make-software/casper-go-sdk/casper"
 
-  "github.com/make-software/ces-go-parser"
+	"github.com/make-software/ces-go-parser"
 )
 
 func main() {
-  testnetNodeAddress := "<put testnet node address here>"
-  rpcClient := casper.NewRPCClient(casper.NewRPCHandler(testnetNodeAddress, http.DefaultClient))
+	testnetNodeAddress := "<put testnet node address here>"
+	rpcClient := casper.NewRPCClient(casper.NewRPCHandler(testnetNodeAddress, http.DefaultClient))
 
-  ctx := context.Background()
-  deployResult, err := rpcClient.GetDeploy(ctx, "c1bb9ae27877f5ecf4ef71307e7ee3c403bcace065565c3645b81ec0a9bc8978")
-  if err != nil {
-    panic(err)
-  }
+	ctx := context.Background()
+	deployResult, err := rpcClient.GetDeploy(ctx, "c1bb9ae27877f5ecf4ef71307e7ee3c403bcace065565c3645b81ec0a9bc8978")
+	if err != nil {
+		panic(err)
+	}
 
-  contractHash, err := casper.NewHash("0640eb43bd95d5c88b799862bc9fb42d7a241f1a8aae5deaa03170a27ee8eeaa")
-  if err != nil {
-    panic(err)
-  }
+	contractHash, err := casper.NewHash("0640eb43bd95d5c88b799862bc9fb42d7a241f1a8aae5deaa03170a27ee8eeaa")
+	if err != nil {
+		panic(err)
+	}
 
-  parser, err := ces.NewParser(rpcClient, []casper.Hash{contractHash})
-  if err != nil {
-    panic(err)
-  }
+	parser, err := ces.NewParser(rpcClient, []casper.Hash{contractHash})
+	if err != nil {
+		panic(err)
+	}
 
-  parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults[0].Result)
-  if err != nil {
-    panic(err)
-  }
-  for _, result := range parseResults {
-    if result.Error != nil {
-      panic(err)
-    }
-    fmt.Println(result.Event)
-  }
+	parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults[0].Result)
+	if err != nil {
+		panic(err)
+	}
+	for _, result := range parseResults {
+		if result.Error != nil {
+			panic(err)
+		}
+		fmt.Println(result.Event)
+	}
 }
 ```
 
@@ -67,13 +67,13 @@ func main() {
 Go CES Parser provides several public types and functions:
 
 - [`Parser`](#Parser)
-  - [`NewParser`](#NewParser)
-  - [`Parser.ParseExecutionResults`](#ParseExecutionResults)
-  - [`Parser.FetchContractSchemasBytes`](#FetchContractSchemasBytes)
+    - [`NewParser`](#NewParser)
+    - [`Parser.ParseExecutionResults`](#ParseExecutionResults)
+    - [`Parser.FetchContractSchemasBytes`](#FetchContractSchemasBytes)
 - [`NewSchemasFromBytes`](#NewSchemasFromBytes)
 - [`EventData`](#EventData)
 - [`Event`](#Event)
-  - [`ParseEventNameAndData`](#ParseEventNameAndData)
+    - [`ParseEventNameAndData`](#ParseEventNameAndData)
 - [`ParseResult`](#ParseResult)
 - [`Schemas`](#Schemas)
 - [`SchemaData`](#SchemaData)
@@ -182,6 +182,8 @@ Value-object that represents an event:
 | `EventData`           | [`ces.EventData`](#EventData) | EventData                 |
 | `ContractHash`        | `casper.Hash`                 | Event ContractHash        |
 | `ContractPackageHash` | `casper.Hash`                 | Event ContractPackageHash |
+| `TransformID`         | `uint`                        | Event TransformID         |
+| `EventID`             | `uint`                        | EventID                   |
 
 ### `ParseResult`
 

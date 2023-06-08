@@ -90,11 +90,15 @@ func TestEventParser(t *testing.T) {
 		assert.Equal(t, parseResults[0].Event.Name, "BallotCast")
 		assert.Equal(t, parseResults[0].Event.ContractHash.String(), contractHashToParse.String())
 		assert.Equal(t, parseResults[0].Event.ContractPackageHash.String(), contractPackageHash.String())
+		assert.Equal(t, parseResults[0].Event.TransformID, uint(99))
+		assert.Equal(t, parseResults[0].Event.EventID, uint(2))
 		assert.True(t, len(parseResults[0].Event.Data) > 0)
 
 		assert.Equal(t, parseResults[1].Event.Name, "SimpleVotingCreated")
 		assert.Equal(t, parseResults[1].Event.ContractHash.String(), contractHashToParse.String())
 		assert.Equal(t, parseResults[1].Event.ContractPackageHash.String(), contractPackageHash.String())
+		assert.Equal(t, parseResults[1].Event.TransformID, uint(115))
+		assert.Equal(t, parseResults[1].Event.EventID, uint(3))
 		assert.True(t, len(parseResults[1].Event.Data) > 0)
 	})
 }
