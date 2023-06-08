@@ -20,6 +20,8 @@ type Event struct {
 	ContractPackageHash casper.Hash
 	Data                map[string]casper.CLValue
 	Name                string
+	TransformID         uint
+	EventID             uint
 }
 
 // ParseEventNameAndData parse provided rawEvent according to event schema, return EventName and EventData

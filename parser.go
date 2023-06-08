@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/make-software/casper-go-sdk/casper"
@@ -41,6 +42,7 @@ type (
 		Name    string
 		Uref    casper.Uref
 		Payload *bytes.Buffer
+		EventID uint
 	}
 
 	ContractMetadata struct {
@@ -76,7 +78,7 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 
 	var results = make([]ParseResult, 0)
 
-	for _, transform := range executionResult.Success.Effect.Transforms {
+	for transformIDx, transform := range executionResult.Success.Effect.Transforms {
 		if ok := transform.Transform.IsWriteCLValue(); !ok {
 			continue
 		}
@@ -93,7 +95,9 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 
 		parseResult := ParseResult{
 			Event: Event{
-				Name: eventMetadata.Name,
+				Name:        eventMetadata.Name,
+				TransformID: uint(transformIDx),
+				EventID:     eventMetadata.EventID,
 			},
 		}
 
@@ -150,10 +154,16 @@ func ParseEventMetadataFromTransform(transform casper.TransformKey) (EventMetada
 		return EventMetadata{}, err
 	}
 
+	eventID, err := strconv.Atoi(dictionary.Key)
+	if err != nil {
+		return EventMetadata{}, err
+	}
+
 	return EventMetadata{
 		Name:    strings.TrimPrefix(eventNameWithPrefix.String(), eventPrefix),
 		Uref:    dictionary.Uref,
 		Payload: payload,
+		EventID: uint(eventID),
 	}, nil
 }
 
