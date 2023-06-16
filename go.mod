@@ -18,3 +18,5 @@ require (
 	golang.org/x/sys v0.8.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/make-software/casper-go-sdk => github.com/make-software/casper-go-sdk v1.1.3-0.20230616180421-972ea939be6f
