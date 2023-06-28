@@ -30,7 +30,11 @@ func newDictionary(source []byte) (dictionary, error) {
 		return dictionary{}, errors.New("can't parse dictionary event")
 	}
 
-	_ = clvalue.TrimByteSize(buf)
+	_, err = clvalue.TrimByteSize(buf)
+	if err != nil {
+		return dictionary{}, err
+	}
+
 	urefBytes, err := clvalue.FromBufferByType(buf, cltype.NewByteArray(32))
 	if err != nil {
 		return dictionary{}, err
