@@ -16,12 +16,13 @@ type ParseResult struct {
 }
 
 type Event struct {
-	ContractHash        casper.Hash
-	ContractPackageHash casper.Hash
-	Data                map[string]casper.CLValue
-	Name                string
-	TransformID         uint
-	EventID             uint
+	ContractHash        casper.Hash               `json:"contract_hash"`
+	ContractPackageHash casper.Hash               `json:"contract_package_hash"`
+	RawBytes            string                    `json:"raw_bytes"`
+	Data                map[string]casper.CLValue `json:"-"`
+	Name                string                    `json:"name"`
+	TransformID         uint                      `json:"transform_id"`
+	EventID             uint                      `json:"event_id"`
 }
 
 // ParseEventNameAndData parse provided rawEvent according to event schema, return EventName and EventData

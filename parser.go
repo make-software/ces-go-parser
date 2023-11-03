@@ -3,6 +3,7 @@ package ces
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
@@ -39,10 +40,11 @@ type (
 	EventName = string
 
 	EventMetadata struct {
-		Name    string
-		Uref    casper.Uref
-		Payload *bytes.Buffer
-		EventID uint
+		Name     string
+		Uref     casper.Uref
+		Payload  *bytes.Buffer
+		RawBytes string
+		EventID  uint
 	}
 
 	ContractMetadata struct {
@@ -118,6 +120,7 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 		parseResult.Event.ContractHash = contractMetadata.ContractHash
 		parseResult.Event.ContractPackageHash = contractMetadata.ContractPackageHash
 		parseResult.Event.Data = eventData
+		parseResult.Event.RawBytes = eventMetadata.RawBytes
 		results = append(results, parseResult)
 	}
 
@@ -160,10 +163,11 @@ func ParseEventMetadataFromTransform(transform casper.TransformKey) (EventMetada
 	}
 
 	return EventMetadata{
-		Name:    strings.TrimPrefix(eventNameWithPrefix.String(), eventPrefix),
-		Uref:    dictionary.Uref,
-		Payload: payload,
-		EventID: uint(eventID),
+		Name:     strings.TrimPrefix(eventNameWithPrefix.String(), eventPrefix),
+		Uref:     dictionary.Uref,
+		Payload:  payload,
+		RawBytes: hex.EncodeToString(rawBytes.Bytes()),
+		EventID:  uint(eventID),
 	}, nil
 }
 
