@@ -119,8 +119,8 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 
 		parseResult.Event.ContractHash = contractMetadata.ContractHash
 		parseResult.Event.ContractPackageHash = contractMetadata.ContractPackageHash
+		parseResult.Event.RawData = hex.EncodeToString(eventMetadata.Payload.Bytes())
 		parseResult.Event.Data = eventData
-		parseResult.Event.RawBytes = eventMetadata.RawBytes
 		results = append(results, parseResult)
 	}
 

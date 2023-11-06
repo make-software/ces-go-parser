@@ -18,7 +18,7 @@ type ParseResult struct {
 type Event struct {
 	ContractHash        casper.Hash               `json:"contract_hash"`
 	ContractPackageHash casper.Hash               `json:"contract_package_hash"`
-	RawBytes            string                    `json:"raw_bytes"`
+	RawData             string                    `json:"raw_data"`
 	Data                map[string]casper.CLValue `json:"-"`
 	Name                string                    `json:"name"`
 	TransformID         uint                      `json:"transform_id"`
