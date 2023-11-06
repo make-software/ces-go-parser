@@ -40,11 +40,10 @@ type (
 	EventName = string
 
 	EventMetadata struct {
-		Name     string
-		Uref     casper.Uref
-		Payload  *bytes.Buffer
-		RawBytes string
-		EventID  uint
+		Name    string
+		Uref    casper.Uref
+		Payload *bytes.Buffer
+		EventID uint
 	}
 
 	ContractMetadata struct {
@@ -163,11 +162,10 @@ func ParseEventMetadataFromTransform(transform casper.TransformKey) (EventMetada
 	}
 
 	return EventMetadata{
-		Name:     strings.TrimPrefix(eventNameWithPrefix.String(), eventPrefix),
-		Uref:     dictionary.Uref,
-		Payload:  payload,
-		RawBytes: hex.EncodeToString(rawBytes.Bytes()),
-		EventID:  uint(eventID),
+		Name:    strings.TrimPrefix(eventNameWithPrefix.String(), eventPrefix),
+		Uref:    dictionary.Uref,
+		Payload: payload,
+		EventID: uint(eventID),
 	}, nil
 }
 
