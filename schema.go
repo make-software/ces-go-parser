@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 
+	"github.com/make-software/casper-go-sdk/casper"
 	"github.com/make-software/casper-go-sdk/types/clvalue"
 	"github.com/make-software/casper-go-sdk/types/clvalue/cltype"
+	"github.com/make-software/ces-go-parser/utils"
 )
 
 var ErrInvalidSchemaFormat = errors.New("invalid schema format")
@@ -80,6 +84,58 @@ func (t *SchemaData) UnmarshalJSON(data []byte) error {
 	t.ParamType = resulType
 	t.ParamName = temp.ParamName
 	return nil
+}
+
+type EventPayload map[string]interface{}
+
+func (e EventPayload) StringParam(key string) (string, error) {
+	rawParam, ok := e[key]
+	if !ok {
+		return "", fmt.Errorf("failed to get '%s' param from ces event payload", key)
+	}
+
+	value, ok := rawParam.(string)
+	if !ok {
+		return "", fmt.Errorf("failed to assert '%s' param type to string from ces event payload: type: %T", key, rawParam)
+	}
+
+	return value, nil
+}
+
+func (e EventPayload) HashParam(key string) (casper.Hash, error) {
+	value, err := e.StringParam(key)
+	if err != nil {
+		return casper.Hash{}, err
+	}
+
+	return casper.NewHash(value)
+}
+
+func (e EventPayload) Map() map[string]interface{} {
+	return map[string]interface{}(e)
+}
+
+func (t Schemas) ParseEventPayload(event Event) (EventPayload, error) {
+	return t.ParseEventRawDataPayload(event.Name, event.RawData)
+}
+
+func (t Schemas) ParseEventRawDataPayload(name, rawData string) (EventPayload, error) {
+	rawEventData, err := hex.DecodeString(rawData)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := ParseEventDataFromSchemaBytes(t[name], bytes.NewBuffer(rawEventData))
+	if err != nil {
+		return nil, err
+	}
+
+	eventData := make(map[string]interface{}, len(result))
+	for key, res := range result {
+		eventData[key] = utils.CLValueToJSONValue(res)
+	}
+
+	return eventData, nil
 }
 
 func (t Schemas) Value() (driver.Value, error) {
