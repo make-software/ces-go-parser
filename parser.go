@@ -3,6 +3,7 @@ package ces
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
@@ -117,6 +118,7 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 
 		parseResult.Event.ContractHash = contractMetadata.ContractHash
 		parseResult.Event.ContractPackageHash = contractMetadata.ContractPackageHash
+		parseResult.Event.RawData = hex.EncodeToString(eventMetadata.Payload.Bytes())
 		parseResult.Event.Data = eventData
 		results = append(results, parseResult)
 	}
