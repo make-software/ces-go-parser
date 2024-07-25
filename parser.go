@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/make-software/casper-go-sdk/casper"
-	"github.com/make-software/casper-go-sdk/types/clvalue"
-	"github.com/make-software/casper-go-sdk/types/clvalue/cltype"
+	"github.com/make-software/casper-go-sdk/v2/casper"
+	"github.com/make-software/casper-go-sdk/v2/types/clvalue"
+	"github.com/make-software/casper-go-sdk/v2/types/clvalue/cltype"
 )
 
 var (
@@ -73,14 +73,14 @@ func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*Ev
 
 // ParseExecutionResults accept casper.ExecutionResult analyze its transforms and trying to parse events according to stored contract schema
 func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResult) ([]ParseResult, error) {
-	if executionResult.Success == nil {
+	if executionResult.ErrorMessage != nil {
 		return nil, ErrFailedDeploy
 	}
 
 	var results = make([]ParseResult, 0)
 
-	for transformIDx, transform := range executionResult.Success.Effect.Transforms {
-		if ok := transform.Transform.IsWriteCLValue(); !ok {
+	for transformIDx, transform := range executionResult.Effects {
+		if ok := transform.Kind.IsWriteCLValue(); !ok {
 			continue
 		}
 
@@ -126,8 +126,8 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 	return results, nil
 }
 
-func ParseEventMetadataFromTransform(transform casper.TransformKey) (EventMetadata, error) {
-	writeCLValue, err := transform.Transform.ParseAsWriteCLValue()
+func ParseEventMetadataFromTransform(transform casper.Transform) (EventMetadata, error) {
+	writeCLValue, err := transform.Kind.ParseAsWriteCLValue()
 	if err != nil {
 		return EventMetadata{}, err
 	}
