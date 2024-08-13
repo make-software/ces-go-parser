@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/make-software/casper-go-sdk/casper"
-	"github.com/make-software/casper-go-sdk/rpc"
-	"github.com/make-software/casper-go-sdk/types/key"
+	"github.com/make-software/casper-go-sdk/v2/casper"
+	"github.com/make-software/casper-go-sdk/v2/rpc"
+	"github.com/make-software/casper-go-sdk/v2/types"
+	"github.com/make-software/casper-go-sdk/v2/types/key"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/make-software/ces-go-parser/utils/mocks"
+	"github.com/make-software/ces-go-parser/v2/utils/mocks"
 )
 
 func TestEventParser(t *testing.T) {
@@ -75,15 +76,22 @@ func TestEventParser(t *testing.T) {
 
 		eventParser.contractsMetadata = contractsMetadata
 
-		var res casper.InfoGetDeployResult
+		type rawData struct {
+			APIVersion       string                        `json:"api_version"`
+			Deploy           *types.Deploy                 `json:"deploy"`
+			ExecutionResults []types.DeployExecutionResult `json:"execution_results"`
+		}
 
+		var results rawData
 		data, err := os.ReadFile("./utils/fixtures/deploys/voting_created.json")
 		assert.NoError(t, err)
 
-		err = json.Unmarshal(data, &res)
+		err = json.Unmarshal(data, &results)
 		assert.NoError(t, err)
 
-		parseResults, err := eventParser.ParseExecutionResults(res.ExecutionResults[0].Result)
+		res := types.DeployExecutionInfoFromV1(results.ExecutionResults, nil)
+
+		parseResults, err := eventParser.ParseExecutionResults(res.ExecutionResult)
 		assert.NoError(t, err)
 		require.True(t, len(parseResults) == 2)
 

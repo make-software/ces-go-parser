@@ -8,7 +8,7 @@ The library is built on top of the `casper-go-sdk` and operates on types defined
 ## Install
 
 ```bash
-go get github.com/make-software/ces-go-parser
+go get github.com/make-software/ces-go-parser/v2
 ```
 
 ## Usage
@@ -20,13 +20,13 @@ with `casper-go-sdk`:
 package main
 
 import (
-	"context"
-	"fmt"
-	"net/http"
+  "context"
+  "fmt"
+  "net/http"
 
-	"github.com/make-software/casper-go-sdk/casper"
+  "github.com/make-software/casper-go-sdk/v2/casper"
 
-	"github.com/make-software/ces-go-parser"
+  "github.com/make-software/ces-go-parser/v2"
 )
 
 func main() {
@@ -49,7 +49,7 @@ func main() {
 		panic(err)
 	}
 
-	parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults[0].Result)
+  parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults.ExecutionResult)
 	if err != nil {
 		panic(err)
 	}
@@ -100,9 +100,9 @@ package main
 import (
 	"net/http"
 
-	"github.com/make-software/casper-go-sdk/casper"
+	"github.com/make-software/casper-go-sdk/v2/casper"
 
-	"github.com/make-software/ces-go-parser"
+	"github.com/make-software/ces-go-parser/v2"
 )
 
 func main() {

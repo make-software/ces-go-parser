@@ -9,10 +9,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/make-software/casper-go-sdk/casper"
-	"github.com/make-software/casper-go-sdk/types/clvalue"
-	"github.com/make-software/casper-go-sdk/types/clvalue/cltype"
-	"github.com/make-software/ces-go-parser/utils"
+	"github.com/make-software/casper-go-sdk/v2/casper"
+	"github.com/make-software/casper-go-sdk/v2/types/clvalue"
+	"github.com/make-software/casper-go-sdk/v2/types/clvalue/cltype"
+	"github.com/make-software/ces-go-parser/v2/utils"
 )
 
 var ErrInvalidSchemaFormat = errors.New("invalid schema format")
