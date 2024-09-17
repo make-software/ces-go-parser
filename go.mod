@@ -8,6 +8,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/make-software/casper-go-sdk/v2 v2.0.1-beta1.0.20240725075941-fdac8c4ae070
 	github.com/stretchr/testify v1.8.2
+	golang.org/x/sync v0.6.0
 )
 
 require (

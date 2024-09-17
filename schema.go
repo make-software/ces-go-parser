@@ -12,6 +12,7 @@ import (
 	"github.com/make-software/casper-go-sdk/v2/casper"
 	"github.com/make-software/casper-go-sdk/v2/types/clvalue"
 	"github.com/make-software/casper-go-sdk/v2/types/clvalue/cltype"
+
 	"github.com/make-software/ces-go-parser/v2/utils"
 )
 
