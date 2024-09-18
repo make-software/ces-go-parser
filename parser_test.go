@@ -66,9 +66,6 @@ func TestEventParser(t *testing.T) {
 		err = json.Unmarshal([]byte(fmt.Sprintf(`{"cl_type": "Any", "bytes": "%s"}`, schemaHex)), &arg)
 		require.NoError(t, err)
 
-		mockedClient.EXPECT().GetLatestEntity(gomock.Any(), gomock.Any()).Return(
-			rpc.StateGetEntity{}, errors.New("error on state_get_entity request "))
-
 		mockedClient.EXPECT().QueryGlobalStateByStateHash(context.Background(), &rootHash, "uref-12263e86f497f42e405d5d1390aa3c1a8bfc35f3699fdc3be806a5cfe139dac9-007", nil).Return(
 			rpc.QueryGlobalStateResult{
 				StoredValue: casper.StoredValue{
@@ -76,7 +73,7 @@ func TestEventParser(t *testing.T) {
 				},
 			}, nil)
 
-		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse})
+		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse}, NetworkVersionV1)
 		require.NoError(t, err)
 
 		eventParser.contractsMetadata = contractsMetadata
@@ -158,7 +155,7 @@ func TestEventParser(t *testing.T) {
 				},
 			}, nil)
 
-		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse})
+		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse}, NetworkVersionV2)
 		require.NoError(t, err)
 
 		eventParser.contractsMetadata = contractsMetadata
@@ -224,7 +221,7 @@ func TestEventParser(t *testing.T) {
 				},
 			}, nil)
 
-		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse})
+		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse}, NetworkVersionV2)
 		require.NoError(t, err)
 
 		eventParser.contractsMetadata = contractsMetadata

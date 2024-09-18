@@ -30,6 +30,13 @@ var (
 	ErrNotSmartContractAddressableEntity = errors.New("not SmartContract addressable entity type")
 )
 
+type NetworkVersion uint
+
+const (
+	NetworkVersionV1 NetworkVersion = iota
+	NetworkVersionV2
+)
+
 const (
 	eventSchemaNamedKey = "__events_schema"
 	eventNamedKey       = "__events"
@@ -41,6 +48,8 @@ type (
 		casperClient casper.RPCClient
 		// key represent Uref from __events named key
 		contractsMetadata map[string]ContractMetadata
+		// version of the network used by parser
+		networkVersion NetworkVersion
 	}
 	EventName = string
 
@@ -60,12 +69,12 @@ type (
 	}
 )
 
-func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*EventParser, error) {
+func NewParserWithVersion(casperClient casper.RPCClient, contractHashes []casper.Hash, version NetworkVersion) (*EventParser, error) {
 	eventParser := EventParser{
 		casperClient: casperClient,
 	}
 
-	contractsMetadata, err := eventParser.loadContractsMetadata(contractHashes)
+	contractsMetadata, err := eventParser.loadContractsMetadata(contractHashes, version)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +83,10 @@ func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*Ev
 		casperClient:      casperClient,
 		contractsMetadata: contractsMetadata,
 	}, nil
+}
+
+func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*EventParser, error) {
+	return NewParserWithVersion(casperClient, contractHashes, NetworkVersionV2)
 }
 
 // ParseExecutionResults accept casper.ExecutionResult analyze its transforms and trying to parse events according to stored contract schema
@@ -226,7 +239,7 @@ func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byt
 	return value.Bytes()
 }
 
-func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash) (map[string]ContractMetadata, error) {
+func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash, version NetworkVersion) (map[string]ContractMetadata, error) {
 	stateRootHash, err := p.casperClient.GetStateRootHashLatest(context.Background())
 	if err != nil {
 		return nil, err
@@ -241,11 +254,16 @@ func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash) (map[s
 	loadMetadata := func(hash casper.Hash) {
 		errGroup.Go(func() error {
 			var contractMetadata *ContractMetadata
-			// try to load contract metadata as AddressableEntity
-			contractMetadata, err := p.loadContractMetadatAsAddressableEntity(ctx, hash)
-			if err != nil {
-				log.Println("Error on trying to load contract metadata from addressable entity: ", err)
+			// try to load contract metadata as AddressableEntity in case of network version V2
+			if version == NetworkVersionV2 {
+				contractMetadata, err = p.loadContractMetadatAsAddressableEntity(ctx, hash)
+				if err != nil {
+					log.Println("Error on trying to load contract metadata from addressable entity: ", err)
+				}
+			}
 
+			if contractMetadata == nil {
+				log.Println("Trying to load contract metadata from global state...")
 				// in case of error try to load metadata as stored contract
 				contractMetadata, err = p.loadContractMetadatAsStoredContract(ctx, hash, stateRootString)
 				if err != nil {

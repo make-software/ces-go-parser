@@ -20,13 +20,13 @@ with `casper-go-sdk`:
 package main
 
 import (
-  "context"
-  "fmt"
-  "net/http"
+	"context"
+	"fmt"
+	"net/http"
 
-  "github.com/make-software/casper-go-sdk/v2/casper"
+	"github.com/make-software/casper-go-sdk/v2/casper"
 
-  "github.com/make-software/ces-go-parser/v2"
+	"github.com/make-software/ces-go-parser/v2"
 )
 
 func main() {
@@ -49,7 +49,7 @@ func main() {
 		panic(err)
 	}
 
-  parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults.ExecutionResult)
+	parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults.ExecutionResult)
 	if err != nil {
 		panic(err)
 	}
@@ -61,6 +61,43 @@ func main() {
 	}
 }
 ```
+
+## Migrating from 1.5.x to 2.x
+
+To upgrade to `ces-go-parser` version `2.x`, you need to update the parser version in your `go.mod` file and adjust all
+import paths in your project. 
+
+Specifically, append `/v2` to the import path, for example, update:
+```go
+    "github.com/make-software/ces-go-parser"
+```
+
+to:
+
+```go
+    "github.com/make-software/ces-go-parser/v2"
+```
+
+In version `2.x`, `ces-go-parser` supports event parsing from smart contracts defined as `AddressableEntity` on the network, leveraging the [GO SDK V2](https://github.com/make-software/casper-go-sdk/releases/tag/v2.0.2-beta1).
+By default, the parser will attempt to load smart contracts as `AddressableEntity`.
+
+If you need to use the new parser version with a `1.5.x` network, you can utilize the `NewParserWithVersion` constructor
+to specify the version, preventing an extra network calls to read the smart contract as an `AddressableEntity`.
+
+```go
+	parser, err := ces.NewParserWithVersion(rpcClient, []casper.Hash{contractHash}, ces.NetworkVersionV1)
+	if err != nil {
+		panic(err)
+	}
+```
+
+### Breaking changes
+
+The public interface of the `ces-go-parser` remains almost the same.
+
+There is only one interface change:
+
+- `func LoadContractMetadataWithoutSchema` accept list of `NamedKeys` and ContractPackageHash instead of `casper.Contract`
 
 ## API
 
