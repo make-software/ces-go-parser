@@ -82,6 +82,7 @@ func NewParserWithVersion(casperClient casper.RPCClient, contractHashes []casper
 	return &EventParser{
 		casperClient:      casperClient,
 		contractsMetadata: contractsMetadata,
+		networkVersion:    version,
 	}, nil
 }
 
@@ -190,14 +191,14 @@ func ParseEventMetadataFromTransform(transform casper.Transform) (EventMetadata,
 
 // FetchContractSchemasBytes accept contract hash to fetch stored contract schema
 func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byte, error) {
-	loadContractSchemasFromEntity := func(contractHash casper.Hash) (rpc.QueryGlobalStateResult, error) {
+	loadContractSchemasFromEntity := func(contractHash casper.Hash) (*rpc.QueryGlobalStateResult, error) {
 		entity, err := p.casperClient.GetLatestEntity(context.Background(), rpc.EntityIdentifier{
 			EntityAddr: &key.EntityAddr{
 				SmartContract: &contractHash,
 			},
 		})
 		if err != nil {
-			return rpc.QueryGlobalStateResult{}, err
+			return nil, err
 		}
 
 		addressableEntity := entity.Entity.AddressableEntity
@@ -213,22 +214,32 @@ func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byt
 
 			schemasURefValue, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), nil, eventSchemaUref, nil)
 			if err != nil {
-				return rpc.QueryGlobalStateResult{}, err
+				return nil, err
 			}
 
-			return schemasURefValue, nil
+			return &schemasURefValue, nil
 		}
-		return rpc.QueryGlobalStateResult{}, ErrNotSmartContractAddressableEntity
+		return nil, ErrNotSmartContractAddressableEntity
 	}
 
-	schemasURefValue, err := loadContractSchemasFromEntity(contractHash)
-	if err != nil {
-		log.Println("Error pn fetching schemas bytes from addressable entity: ", err)
+	var (
+		schemasURefValue *rpc.QueryGlobalStateResult
+		err              error
+	)
 
-		schemasURefValue, err = p.casperClient.QueryGlobalStateByStateHash(context.Background(), nil, fmt.Sprintf("hash-%s", contractHash.ToHex()), []string{eventSchemaNamedKey})
+	if p.networkVersion == NetworkVersionV2 {
+		schemasURefValue, err = loadContractSchemasFromEntity(contractHash)
+		if err != nil {
+			log.Println("Error on fetching schemas bytes from addressable entity: ", err)
+		}
+	}
+
+	if schemasURefValue == nil {
+		res, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), nil, fmt.Sprintf("hash-%s", contractHash.ToHex()), []string{eventSchemaNamedKey})
 		if err != nil {
 			return nil, err
 		}
+		schemasURefValue = &res
 	}
 
 	value := schemasURefValue.StoredValue.CLValue
