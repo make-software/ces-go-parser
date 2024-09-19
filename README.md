@@ -20,13 +20,13 @@ with `casper-go-sdk`:
 package main
 
 import (
-  "context"
-  "fmt"
-  "net/http"
+	"context"
+	"fmt"
+	"net/http"
 
-  "github.com/make-software/casper-go-sdk/v2/casper"
+	"github.com/make-software/casper-go-sdk/v2/casper"
 
-  "github.com/make-software/ces-go-parser/v2"
+	"github.com/make-software/ces-go-parser/v2"
 )
 
 func main() {
@@ -49,7 +49,7 @@ func main() {
 		panic(err)
 	}
 
-  parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults.ExecutionResult)
+	parseResults, err := parser.ParseExecutionResults(deployResult.ExecutionResults.ExecutionResult)
 	if err != nil {
 		panic(err)
 	}
@@ -60,6 +60,38 @@ func main() {
 		fmt.Println(result.Event)
 	}
 }
+```
+
+## Migration to Casper 2.0.0 (Condor)
+
+Casper 2.0.0 introduces changes in the API that aren't backward compatible with Casper 1.x.
+
+To use CES Go Parser with Casper 2.0.0 you need to the version `v2` of the parser:
+
+```go
+    "github.com/make-software/ces-go-parser/v2"
+```
+
+If you want to use the same version of the parser for both Casper 1.x and Casper 2.x, you'll need to use the
+soft-migration constructor that requires you to specify the network version you are currently running on:
+
+```go
+    parser, err := ces.NewParserWithVersion(rpcClient, []casper.Hash{contractHash}, ces.Casper1x)
+    if err != nil {
+        panic(err)
+    }
+```
+
+### Breaking changes
+
+In CES Go Parser 2.0.0, the `LoadContractMetadataWithoutSchema` function accepts a list of `NamedKeys`
+and `ContractPackageHash` instead of `casper.Contract` it accepted previously:
+
+```go
+    contractMetadata, err := LoadContractMetadataWithoutSchema(contractPackageHash, addressableEntity.NamedKeys)
+	if err != nil {
+		return nil, err
+	}
 ```
 
 ## API

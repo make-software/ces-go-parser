@@ -6,23 +6,35 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
 	"github.com/make-software/casper-go-sdk/v2/casper"
+	"github.com/make-software/casper-go-sdk/v2/rpc"
 	"github.com/make-software/casper-go-sdk/v2/types/clvalue"
 	"github.com/make-software/casper-go-sdk/v2/types/clvalue/cltype"
+	"github.com/make-software/casper-go-sdk/v2/types/key"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
-	ErrFailedDeploy                     = errors.New("error: failed deploy, expected successful deploys")
-	ErrEventNameNotInSchema             = errors.New("error: event name not found in Schema")
-	ErrFailedToParseContractEventSchema = errors.New("error: failed to parse contract event Schema")
-	ErrExpectContractStoredValue        = errors.New("error: expect contract stored value")
-	ErrExpectCLValueStoredValue         = errors.New("error: expect clValue stored value")
-	ErrMissingRequiredNamedKey          = errors.New("error: missing required named key")
-	ErrNoEventPrefixInEvent             = errors.New("error: no event_ prefix in event")
-	ErrNilDictionaryInTransform         = errors.New("error: nil dictionary in transform")
+	ErrFailedDeploy                      = errors.New("error: failed deploy, expected successful deploys")
+	ErrEventNameNotInSchema              = errors.New("error: event name not found in Schema")
+	ErrFailedToParseContractEventSchema  = errors.New("error: failed to parse contract event Schema")
+	ErrExpectContractStoredValue         = errors.New("error: expect contract stored value")
+	ErrExpectCLValueStoredValue          = errors.New("error: expect clValue stored value")
+	ErrMissingRequiredNamedKey           = errors.New("error: missing required named key")
+	ErrNoEventPrefixInEvent              = errors.New("error: no event_ prefix in event")
+	ErrNilDictionaryInTransform          = errors.New("error: nil dictionary in transform")
+	ErrNotSmartContractAddressableEntity = errors.New("not SmartContract addressable entity type")
+)
+
+type NetworkVersion uint
+
+const (
+	Casper1x NetworkVersion = iota
+	Casper2x
 )
 
 const (
@@ -36,6 +48,8 @@ type (
 		casperClient casper.RPCClient
 		// key represent Uref from __events named key
 		contractsMetadata map[string]ContractMetadata
+		// version of the network used by parser
+		networkVersion NetworkVersion
 	}
 	EventName = string
 
@@ -55,12 +69,12 @@ type (
 	}
 )
 
-func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*EventParser, error) {
+func NewParserWithVersion(casperClient casper.RPCClient, contractHashes []casper.Hash, version NetworkVersion) (*EventParser, error) {
 	eventParser := EventParser{
 		casperClient: casperClient,
 	}
 
-	contractsMetadata, err := eventParser.loadContractsMetadata(contractHashes)
+	contractsMetadata, err := eventParser.loadContractsMetadata(contractHashes, version)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +82,12 @@ func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*Ev
 	return &EventParser{
 		casperClient:      casperClient,
 		contractsMetadata: contractsMetadata,
+		networkVersion:    version,
 	}, nil
+}
+
+func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*EventParser, error) {
+	return NewParserWithVersion(casperClient, contractHashes, Casper2x)
 }
 
 // ParseExecutionResults accept casper.ExecutionResult analyze its transforms and trying to parse events according to stored contract schema
@@ -109,6 +128,7 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 			continue
 		}
 
+		rawData := eventMetadata.Payload.Bytes()
 		eventData, err := ParseEventDataFromSchemaBytes(eventSchema, eventMetadata.Payload)
 		if err != nil {
 			parseResult.Error = err
@@ -118,7 +138,7 @@ func (p *EventParser) ParseExecutionResults(executionResult casper.ExecutionResu
 
 		parseResult.Event.ContractHash = contractMetadata.ContractHash
 		parseResult.Event.ContractPackageHash = contractMetadata.ContractPackageHash
-		parseResult.Event.RawData = hex.EncodeToString(eventMetadata.Payload.Bytes())
+		parseResult.Event.RawData = hex.EncodeToString(rawData)
 		parseResult.Event.Data = eventData
 		results = append(results, parseResult)
 	}
@@ -171,9 +191,55 @@ func ParseEventMetadataFromTransform(transform casper.Transform) (EventMetadata,
 
 // FetchContractSchemasBytes accept contract hash to fetch stored contract schema
 func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byte, error) {
-	schemasURefValue, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), nil, fmt.Sprintf("hash-%s", contractHash.ToHex()), []string{eventSchemaNamedKey})
-	if err != nil {
-		return nil, err
+	loadContractSchemasFromEntity := func(contractHash casper.Hash) (*rpc.QueryGlobalStateResult, error) {
+		entity, err := p.casperClient.GetLatestEntity(context.Background(), rpc.EntityIdentifier{
+			EntityAddr: &key.EntityAddr{
+				SmartContract: &contractHash,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		addressableEntity := entity.Entity.AddressableEntity
+		if addressableEntity != nil && addressableEntity.Entity.EntityKind.SmartContract != nil {
+
+			var eventSchemaUref string
+			for _, namedKey := range addressableEntity.NamedKeys {
+				if namedKey.Name == eventSchemaNamedKey {
+					eventSchemaUref = namedKey.Key.String()
+					break
+				}
+			}
+
+			schemasURefValue, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), nil, eventSchemaUref, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			return &schemasURefValue, nil
+		}
+		return nil, ErrNotSmartContractAddressableEntity
+	}
+
+	var (
+		schemasURefValue *rpc.QueryGlobalStateResult
+		err              error
+	)
+
+	if p.networkVersion == Casper2x {
+		schemasURefValue, err = loadContractSchemasFromEntity(contractHash)
+		if err != nil {
+			log.Println("Error on fetching schemas bytes from addressable entity: ", err)
+		}
+	}
+
+	if schemasURefValue == nil {
+		res, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), nil, fmt.Sprintf("hash-%s", contractHash.ToHex()), []string{eventSchemaNamedKey})
+		if err != nil {
+			return nil, err
+		}
+		schemasURefValue = &res
 	}
 
 	value := schemasURefValue.StoredValue.CLValue
@@ -181,15 +247,10 @@ func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byt
 		return nil, ErrExpectCLValueStoredValue
 	}
 
-	bytesData, err := value.Value()
-	if err != nil {
-		return nil, err
-	}
-
-	return bytesData.Any.Bytes(), nil
+	return value.Bytes()
 }
 
-func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash) (map[string]ContractMetadata, error) {
+func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash, version NetworkVersion) (map[string]ContractMetadata, error) {
 	stateRootHash, err := p.casperClient.GetStateRootHashLatest(context.Background())
 	if err != nil {
 		return nil, err
@@ -197,41 +258,64 @@ func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash) (map[s
 
 	stateRootString := stateRootHash.StateRootHash.ToHex()
 	contractsSchemas := make(map[string]ContractMetadata, len(contractHashes))
-	for _, hash := range contractHashes {
-		contractResult, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), &stateRootString, fmt.Sprintf("hash-%s", hash), nil)
-		if err != nil {
-			return nil, err
-		}
+	metadatas := make(chan *ContractMetadata, len(contractHashes))
 
-		if contractResult.StoredValue.Contract == nil {
-			return nil, ErrExpectContractStoredValue
-		}
+	errGroup, ctx := errgroup.WithContext(context.Background())
 
-		contractMetadata, err := LoadContractMetadataWithoutSchema(*contractResult.StoredValue.Contract)
-		if err != nil {
-			return nil, err
-		}
+	loadMetadata := func(hash casper.Hash) {
+		errGroup.Go(func() error {
+			var contractMetadata *ContractMetadata
+			// try to load contract metadata as AddressableEntity in case of network version V2
+			if version == Casper2x {
+				contractMetadata, err = p.loadContractMetadatAsAddressableEntity(ctx, hash)
+				if err != nil {
+					log.Println("Error on trying to load contract metadata from addressable entity: ", err)
+				}
+			}
 
-		schemas, err := LoadContractEventSchemas(p.casperClient, stateRootString, contractMetadata.EventsSchemaURef)
-		if err != nil {
-			return nil, ErrFailedToParseContractEventSchema
-		}
+			if contractMetadata == nil {
+				log.Println("Trying to load contract metadata from global state...")
+				// in case of error try to load metadata as stored contract
+				contractMetadata, err = p.loadContractMetadatAsStoredContract(ctx, hash, stateRootString)
+				if err != nil {
+					return err
+				}
+			}
 
-		contractMetadata.ContractHash = hash
-		contractMetadata.Schemas = schemas
-		contractsSchemas[contractMetadata.EventsURef.String()] = contractMetadata
+			schemas, err := LoadContractEventSchemas(p.casperClient, stateRootString, contractMetadata.EventsSchemaURef)
+			if err != nil {
+				return ErrFailedToParseContractEventSchema
+			}
+
+			contractMetadata.ContractHash = hash
+			contractMetadata.Schemas = schemas
+			metadatas <- contractMetadata
+			return nil
+		})
 	}
 
+	for _, hash := range contractHashes {
+		loadMetadata(hash)
+	}
+
+	if err = errGroup.Wait(); err != nil {
+		return nil, err
+	}
+
+	close(metadatas)
+	for contractMetadata := range metadatas {
+		contractsSchemas[contractMetadata.EventsURef.String()] = *contractMetadata
+	}
 	return contractsSchemas, nil
 }
 
-func LoadContractMetadataWithoutSchema(contractResult casper.Contract) (ContractMetadata, error) {
+func LoadContractMetadataWithoutSchema(contractPackage casper.Hash, namedKeys casper.NamedKeys) (ContractMetadata, error) {
 	var (
 		eventsURefStr       string
 		eventsSchemaURefStr string
 	)
 
-	for _, namedKey := range contractResult.NamedKeys {
+	for _, namedKey := range namedKeys {
 		switch namedKey.Name {
 		case eventNamedKey:
 			eventsURefStr = namedKey.Key.String()
@@ -259,7 +343,7 @@ func LoadContractMetadataWithoutSchema(contractResult casper.Contract) (Contract
 	}
 
 	return ContractMetadata{
-		ContractPackageHash: contractResult.ContractPackageHash.Hash,
+		ContractPackageHash: contractPackage,
 		EventsSchemaURef:    eventsSchemaURef,
 		EventsURef:          eventsURef,
 	}, nil
@@ -283,4 +367,53 @@ func LoadContractEventSchemas(casperClient casper.RPCClient, stateRootHash strin
 		return nil, err
 	}
 	return NewSchemasFromBytes(hexBytes)
+}
+
+func (p *EventParser) loadContractMetadatAsAddressableEntity(ctx context.Context, hash casper.Hash) (*ContractMetadata, error) {
+	entity, err := p.casperClient.GetLatestEntity(ctx, rpc.EntityIdentifier{
+		EntityAddr: &key.EntityAddr{
+			SmartContract: &hash,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	addressableEntity := entity.Entity.AddressableEntity
+	if addressableEntity != nil && addressableEntity.Entity.EntityKind.SmartContract != nil {
+		packageHash := addressableEntity.Entity.PackageHash
+
+		contractPackageHash, err := casper.NewHash(strings.TrimPrefix(packageHash, "package-"))
+		if err != nil {
+			return nil, err
+		}
+
+		contractMetadata, err := LoadContractMetadataWithoutSchema(contractPackageHash, addressableEntity.NamedKeys)
+		if err != nil {
+			return nil, err
+		}
+
+		return &contractMetadata, nil
+	}
+
+	return nil, ErrNotSmartContractAddressableEntity
+}
+
+func (p *EventParser) loadContractMetadatAsStoredContract(ctx context.Context, hash casper.Hash, stateRoot string) (*ContractMetadata, error) {
+	contractResult, err := p.casperClient.QueryGlobalStateByStateHash(context.Background(), &stateRoot, fmt.Sprintf("hash-%s", hash), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if contractResult.StoredValue.Contract == nil {
+		return nil, ErrExpectContractStoredValue
+	}
+
+	contract := contractResult.StoredValue.Contract
+	contractMetadata, err := LoadContractMetadataWithoutSchema(contract.ContractPackageHash.Hash, contract.NamedKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	return &contractMetadata, nil
 }

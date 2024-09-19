@@ -3,8 +3,10 @@ package ces
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -71,7 +73,7 @@ func TestEventParser(t *testing.T) {
 				},
 			}, nil)
 
-		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse})
+		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse}, Casper1x)
 		require.NoError(t, err)
 
 		eventParser.contractsMetadata = contractsMetadata
@@ -109,6 +111,159 @@ func TestEventParser(t *testing.T) {
 		assert.Equal(t, parseResults[1].Event.EventID, uint(3))
 		assert.True(t, len(parseResults[1].Event.Data) > 0)
 	})
+
+	t.Run("Test events parsing from addressable entity", func(t *testing.T) {
+		var schemaHex = `08000000100000004164646564546f57686974656c6973740100000007000000616464726573730b0e00000042616c6c6f7443616e63656c65640500000005000000766f7465720b09000000766f74696e675f6964040b000000766f74696e675f74797065030600000063686f69636503050000007374616b65080a00000042616c6c6f74436173740500000005000000766f7465720b09000000766f74696e675f6964040b000000766f74696e675f74797065030600000063686f69636503050000007374616b65080c0000004f776e65724368616e67656401000000090000006e65775f6f776e65720b1400000052656d6f76656446726f6d57686974656c6973740100000007000000616464726573730b1300000053696d706c65566f74696e67437265617465640c0000000d000000646f63756d656e745f686173680a0700000063726561746f720b050000007374616b650d0809000000766f74696e675f69640416000000636f6e6669675f696e666f726d616c5f71756f72756d041b000000636f6e6669675f696e666f726d616c5f766f74696e675f74696d650514000000636f6e6669675f666f726d616c5f71756f72756d0419000000636f6e6669675f666f726d616c5f766f74696e675f74696d650516000000636f6e6669675f746f74616c5f6f6e626f61726465640822000000636f6e6669675f646f75626c655f74696d655f6265747765656e5f766f74696e6773001d000000636f6e6669675f766f74696e675f636c6561726e6573735f64656c7461082e000000636f6e6669675f74696d655f6265747765656e5f696e666f726d616c5f616e645f666f726d616c5f766f74696e67050e000000566f74696e6743616e63656c65640300000009000000766f74696e675f6964040b000000766f74696e675f747970650308000000756e7374616b6573110b080b000000566f74696e67456e6465640d00000009000000766f74696e675f6964040b000000766f74696e675f74797065030d000000766f74696e675f726573756c74030e0000007374616b655f696e5f6661766f72080d0000007374616b655f616761696e73740816000000756e626f756e645f7374616b655f696e5f6661766f720815000000756e626f756e645f7374616b655f616761696e7374080e000000766f7465735f696e5f6661766f72040d000000766f7465735f616761696e73740408000000756e7374616b657311130b0408060000007374616b657311130b0408050000006275726e7311130b0408050000006d696e747311130b0408`
+
+		hash, _ := casper.NewHash("002596e815c7235dccf76358695de0088b4636ecb2473c12bb5ff0fbbb7ae94a")
+		mockedClient.EXPECT().GetStateRootHashLatest(context.Background()).Return(casper.ChainGetStateRootHashResult{StateRootHash: hash}, nil)
+		eventUref, err := key.NewKey("uref-d2263e86f497f42e405d5d1390aa3c1a8bfc35f3699fdc3be806a5cfe139dac9-007")
+		assert.NoError(t, err)
+		eventSchemaUref, err := key.NewKey("uref-12263e86f497f42e405d5d1390aa3c1a8bfc35f3699fdc3be806a5cfe139dac9-007")
+		assert.NoError(t, err)
+		rootHash := hash.String()
+
+		data, err := os.ReadFile("./utils/fixtures/addressable_entity/smart_contract_entity.json")
+		assert.NoError(t, err)
+
+		var stateGetEntityResp rpc.StateGetEntity
+		err = json.Unmarshal(data, &stateGetEntityResp)
+		assert.NoError(t, err)
+
+		namedKeys := stateGetEntityResp.Entity.AddressableEntity.NamedKeys
+		namedKeys = append(namedKeys, types.NamedKey{
+			Name: eventNamedKey,
+			Key:  eventUref,
+		})
+		namedKeys = append(namedKeys, types.NamedKey{
+			Name: eventSchemaNamedKey,
+			Key:  eventSchemaUref,
+		})
+
+		stateGetEntityResp.Entity.AddressableEntity.NamedKeys = namedKeys
+
+		mockedClient.EXPECT().GetLatestEntity(gomock.Any(), gomock.Any()).Return(stateGetEntityResp, nil)
+
+		var arg casper.Argument
+		err = json.Unmarshal([]byte(fmt.Sprintf(`{"cl_type": "Any", "bytes": "%s"}`, schemaHex)), &arg)
+		require.NoError(t, err)
+
+		mockedClient.EXPECT().QueryGlobalStateByStateHash(context.Background(), &rootHash, "uref-12263e86f497f42e405d5d1390aa3c1a8bfc35f3699fdc3be806a5cfe139dac9-007", nil).Return(
+			rpc.QueryGlobalStateResult{
+				StoredValue: casper.StoredValue{
+					CLValue: &arg,
+				},
+			}, nil)
+
+		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse}, Casper2x)
+		require.NoError(t, err)
+
+		eventParser.contractsMetadata = contractsMetadata
+
+		type rawData struct {
+			APIVersion       string                        `json:"api_version"`
+			Deploy           *types.Deploy                 `json:"deploy"`
+			ExecutionResults []types.DeployExecutionResult `json:"execution_results"`
+		}
+
+		var results rawData
+		data, err = os.ReadFile("./utils/fixtures/deploys/voting_created.json")
+		assert.NoError(t, err)
+
+		err = json.Unmarshal(data, &results)
+		assert.NoError(t, err)
+
+		res := types.DeployExecutionInfoFromV1(results.ExecutionResults, nil)
+
+		parseResults, err := eventParser.ParseExecutionResults(res.ExecutionResult)
+		assert.NoError(t, err)
+		require.True(t, len(parseResults) == 2)
+
+		assert.Equal(t, parseResults[0].Event.Name, "BallotCast")
+		assert.Equal(t, parseResults[0].Event.ContractHash.String(), contractHashToParse.String())
+		assert.Equal(t, parseResults[0].Event.ContractPackageHash.String(), strings.TrimPrefix(stateGetEntityResp.Entity.AddressableEntity.Entity.PackageHash, "package-"))
+		assert.Equal(t, parseResults[0].Event.TransformID, uint(99))
+		assert.Equal(t, parseResults[0].Event.EventID, uint(2))
+		assert.True(t, len(parseResults[0].Event.Data) > 0)
+
+		assert.Equal(t, parseResults[1].Event.Name, "SimpleVotingCreated")
+		assert.Equal(t, parseResults[1].Event.ContractHash.String(), contractHashToParse.String())
+		assert.Equal(t, parseResults[1].Event.ContractPackageHash.String(), strings.TrimPrefix(stateGetEntityResp.Entity.AddressableEntity.Entity.PackageHash, "package-"))
+		assert.Equal(t, parseResults[1].Event.TransformID, uint(115))
+		assert.Equal(t, parseResults[1].Event.EventID, uint(3))
+		assert.True(t, len(parseResults[1].Event.Data) > 0)
+	})
+
+	t.Run("Test events parsing addressable entity and transaction", func(t *testing.T) {
+		var schemaHex = `09000000040000004275726e02000000050000006f776e65720b06000000616d6f756e7407100000004368616e67654576656e74734d6f6465010000000b0000006576656e74735f6d6f6465030e0000004368616e67655365637572697479020000000500000061646d696e0b0e0000007365635f6368616e67655f6d6170110b03110000004465637265617365416c6c6f77616e636504000000050000006f776e65720b070000007370656e6465720b09000000616c6c6f77616e63650707000000646563725f62790711000000496e637265617365416c6c6f77616e636504000000050000006f776e65720b070000007370656e6465720b09000000616c6c6f77616e63650706000000696e635f627907040000004d696e740200000009000000726563697069656e740b06000000616d6f756e74070c000000536574416c6c6f77616e636503000000050000006f776e65720b070000007370656e6465720b09000000616c6c6f77616e636507080000005472616e73666572030000000600000073656e6465720b09000000726563697069656e740b06000000616d6f756e74070c0000005472616e7366657246726f6d04000000070000007370656e6465720b050000006f776e65720b09000000726563697069656e740b06000000616d6f756e7407`
+
+		hash, _ := casper.NewHash("002596e815c7235dccf76358695de0088b4636ecb2473c12bb5ff0fbbb7ae94a")
+		mockedClient.EXPECT().GetStateRootHashLatest(context.Background()).Return(casper.ChainGetStateRootHashResult{StateRootHash: hash}, nil)
+		rootHash := hash.String()
+
+		data, err := os.ReadFile("./utils/fixtures/addressable_entity/smart_contract_ces_entity.json")
+		assert.NoError(t, err)
+
+		var stateGetEntityResp rpc.StateGetEntity
+		err = json.Unmarshal(data, &stateGetEntityResp)
+		assert.NoError(t, err)
+
+		mockedClient.EXPECT().GetLatestEntity(gomock.Any(), gomock.Any()).Return(stateGetEntityResp, nil)
+
+		var arg casper.Argument
+		err = json.Unmarshal([]byte(fmt.Sprintf(`{"cl_type": "Any", "bytes": "%s"}`, schemaHex)), &arg)
+		require.NoError(t, err)
+
+		mockedClient.EXPECT().QueryGlobalStateByStateHash(context.Background(), &rootHash, "uref-0560a66d045da0293fc86eb0e0b8e38637b3ba2099cf492b0992b94d04ac46d1-007", nil).Return(
+			rpc.QueryGlobalStateResult{
+				StoredValue: casper.StoredValue{
+					CLValue: &arg,
+				},
+			}, nil)
+
+		contractsMetadata, err := eventParser.loadContractsMetadata([]casper.Hash{contractHashToParse}, Casper2x)
+		require.NoError(t, err)
+
+		eventParser.contractsMetadata = contractsMetadata
+
+		var mintTransaction rpc.InfoGetTransactionResult
+		data, err = os.ReadFile("./utils/fixtures/transactions/mint.json")
+		assert.NoError(t, err)
+
+		err = json.Unmarshal(data, &mintTransaction)
+		assert.NoError(t, err)
+
+		parseResults, err := eventParser.ParseExecutionResults(mintTransaction.ExecutionInfo.ExecutionResult)
+		assert.NoError(t, err)
+		require.True(t, len(parseResults) == 1)
+
+		assert.Equal(t, parseResults[0].Event.Name, "Mint")
+		assert.Equal(t, parseResults[0].Event.ContractHash.String(), contractHashToParse.String())
+		assert.Equal(t, parseResults[0].Event.ContractPackageHash.String(), strings.TrimPrefix(stateGetEntityResp.Entity.AddressableEntity.Entity.PackageHash, "package-"))
+		assert.Equal(t, parseResults[0].Event.TransformID, uint(76))
+		assert.Equal(t, parseResults[0].Event.EventID, uint(0))
+		assert.NotEmpty(t, parseResults[0].Event.RawData)
+		assert.True(t, len(parseResults[0].Event.Data) > 0)
+
+		var transferTransaction rpc.InfoGetTransactionResult
+		data, err = os.ReadFile("./utils/fixtures/transactions/transfer.json")
+		assert.NoError(t, err)
+
+		err = json.Unmarshal(data, &transferTransaction)
+		assert.NoError(t, err)
+
+		parseResults, err = eventParser.ParseExecutionResults(transferTransaction.ExecutionInfo.ExecutionResult)
+		assert.NoError(t, err)
+		require.True(t, len(parseResults) == 1)
+
+		assert.Equal(t, parseResults[0].Event.Name, "Transfer")
+		assert.Equal(t, parseResults[0].Event.ContractHash.String(), contractHashToParse.String())
+		assert.Equal(t, parseResults[0].Event.ContractPackageHash.String(), strings.TrimPrefix(stateGetEntityResp.Entity.AddressableEntity.Entity.PackageHash, "package-"))
+		assert.Equal(t, parseResults[0].Event.TransformID, uint(11))
+		assert.Equal(t, parseResults[0].Event.EventID, uint(1))
+		assert.NotEmpty(t, parseResults[0].Event.RawData)
+		assert.True(t, len(parseResults[0].Event.Data) > 0)
+	})
 }
 
 func TestParseEventAndData(t *testing.T) {
@@ -121,7 +276,8 @@ func TestParseEventAndData(t *testing.T) {
 	mockedClient := mocks.NewMockClient(mockCtrl)
 
 	eventParser := EventParser{
-		casperClient: mockedClient,
+		casperClient:   mockedClient,
+		networkVersion: Casper2x,
 	}
 
 	var schemaHex = `08000000100000004164646564546f57686974656c6973740100000007000000616464726573730b0e00000042616c6c6f7443616e63656c65640500000005000000766f7465720b09000000766f74696e675f6964040b000000766f74696e675f74797065030600000063686f69636503050000007374616b65080a00000042616c6c6f74436173740500000005000000766f7465720b09000000766f74696e675f6964040b000000766f74696e675f74797065030600000063686f69636503050000007374616b65080c0000004f776e65724368616e67656401000000090000006e65775f6f776e65720b1400000052656d6f76656446726f6d57686974656c6973740100000007000000616464726573730b1300000053696d706c65566f74696e67437265617465640c0000000d000000646f63756d656e745f686173680a0700000063726561746f720b050000007374616b650d0809000000766f74696e675f69640416000000636f6e6669675f696e666f726d616c5f71756f72756d041b000000636f6e6669675f696e666f726d616c5f766f74696e675f74696d650514000000636f6e6669675f666f726d616c5f71756f72756d0419000000636f6e6669675f666f726d616c5f766f74696e675f74696d650516000000636f6e6669675f746f74616c5f6f6e626f61726465640822000000636f6e6669675f646f75626c655f74696d655f6265747765656e5f766f74696e6773001d000000636f6e6669675f766f74696e675f636c6561726e6573735f64656c7461082e000000636f6e6669675f74696d655f6265747765656e5f696e666f726d616c5f616e645f666f726d616c5f766f74696e67050e000000566f74696e6743616e63656c65640300000009000000766f74696e675f6964040b000000766f74696e675f747970650308000000756e7374616b6573110b080b000000566f74696e67456e6465640d00000009000000766f74696e675f6964040b000000766f74696e675f74797065030d000000766f74696e675f726573756c74030e0000007374616b655f696e5f6661766f72080d0000007374616b655f616761696e73740816000000756e626f756e645f7374616b655f696e5f6661766f720815000000756e626f756e645f7374616b655f616761696e7374080e000000766f7465735f696e5f6661766f72040d000000766f7465735f616761696e73740408000000756e7374616b657311130b0408060000007374616b657311130b0408050000006275726e7311130b0408050000006d696e747311130b0408`
@@ -129,6 +285,9 @@ func TestParseEventAndData(t *testing.T) {
 	var arg casper.Argument
 	err = json.Unmarshal([]byte(fmt.Sprintf(`{"cl_type": "Any", "bytes": "%s"}`, schemaHex)), &arg)
 	require.NoError(t, err)
+
+	mockedClient.EXPECT().GetLatestEntity(gomock.Any(), gomock.Any()).Return(
+		rpc.StateGetEntity{}, errors.New("error on state_get_entity request "))
 
 	mockedClient.EXPECT().QueryGlobalStateByStateHash(context.Background(), nil, fmt.Sprintf("hash-%s", contractHashToParse.ToHex()), []string{eventSchemaNamedKey}).Return(
 		rpc.QueryGlobalStateResult{
