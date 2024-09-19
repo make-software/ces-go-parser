@@ -33,8 +33,8 @@ var (
 type NetworkVersion uint
 
 const (
-	NetworkVersionV1 NetworkVersion = iota
-	NetworkVersionV2
+	Casper1x NetworkVersion = iota
+	Casper2x
 )
 
 const (
@@ -87,7 +87,7 @@ func NewParserWithVersion(casperClient casper.RPCClient, contractHashes []casper
 }
 
 func NewParser(casperClient casper.RPCClient, contractHashes []casper.Hash) (*EventParser, error) {
-	return NewParserWithVersion(casperClient, contractHashes, NetworkVersionV2)
+	return NewParserWithVersion(casperClient, contractHashes, Casper2x)
 }
 
 // ParseExecutionResults accept casper.ExecutionResult analyze its transforms and trying to parse events according to stored contract schema
@@ -227,7 +227,7 @@ func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byt
 		err              error
 	)
 
-	if p.networkVersion == NetworkVersionV2 {
+	if p.networkVersion == Casper2x {
 		schemasURefValue, err = loadContractSchemasFromEntity(contractHash)
 		if err != nil {
 			log.Println("Error on fetching schemas bytes from addressable entity: ", err)
@@ -266,7 +266,7 @@ func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash, versio
 		errGroup.Go(func() error {
 			var contractMetadata *ContractMetadata
 			// try to load contract metadata as AddressableEntity in case of network version V2
-			if version == NetworkVersionV2 {
+			if version == Casper2x {
 				contractMetadata, err = p.loadContractMetadatAsAddressableEntity(ctx, hash)
 				if err != nil {
 					log.Println("Error on trying to load contract metadata from addressable entity: ", err)

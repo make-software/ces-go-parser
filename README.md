@@ -62,42 +62,37 @@ func main() {
 }
 ```
 
-## Migrating from 1.5.x to 2.x
+## Migration to Casper 2.0.0 (Condor)
 
-To upgrade to `ces-go-parser` version `2.x`, you need to update the parser version in your `go.mod` file and adjust all
-import paths in your project. 
+Casper 2.0.0 introduces changes in the API that aren't backward compatible with Casper 1.x.
 
-Specifically, append `/v2` to the import path, for example, update:
-```go
-    "github.com/make-software/ces-go-parser"
-```
-
-to:
+To use CES Go Parser with Casper 2.0.0 you need to the version `v2` of the parser:
 
 ```go
     "github.com/make-software/ces-go-parser/v2"
 ```
 
-In version `2.x`, `ces-go-parser` supports event parsing from smart contracts defined as `AddressableEntity` on the network, leveraging the [GO SDK V2](https://github.com/make-software/casper-go-sdk/releases/tag/v2.0.2-beta1).
-By default, the parser will attempt to load smart contracts as `AddressableEntity`.
-
-If you need to use the new parser version with a `1.5.x` network, you can utilize the `NewParserWithVersion` constructor
-to specify the version, preventing an extra network calls to read the smart contract as an `AddressableEntity`.
+If you want to use the same version of the parser for both Casper 1.x and Casper 2.x, you'll need to use the
+soft-migration constructor that requires you to specify the network version you are currently running on:
 
 ```go
-	parser, err := ces.NewParserWithVersion(rpcClient, []casper.Hash{contractHash}, ces.NetworkVersionV1)
-	if err != nil {
-		panic(err)
-	}
+    parser, err := ces.NewParserWithVersion(rpcClient, []casper.Hash{contractHash}, ces.Casper1x)
+    if err != nil {
+        panic(err)
+    }
 ```
 
 ### Breaking changes
 
-The public interface of the `ces-go-parser` remains almost the same.
+In CES Go Parser 2.0.0, the `LoadContractMetadataWithoutSchema` function accepts a list of `NamedKeys`
+and `ContractPackageHash` instead of `casper.Contract` it accepted previously:
 
-There is only one interface change:
-
-- `func LoadContractMetadataWithoutSchema` accept list of `NamedKeys` and ContractPackageHash instead of `casper.Contract`
+```go
+    contractMetadata, err := LoadContractMetadataWithoutSchema(contractPackageHash, addressableEntity.NamedKeys)
+	if err != nil {
+		return nil, err
+	}
+```
 
 ## API
 
