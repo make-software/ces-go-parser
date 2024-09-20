@@ -82,6 +82,18 @@ soft-migration constructor that requires you to specify the network version you 
     }
 ```
 
+You can also use a parser to process events emitted by `AddressableEntity` smart contracts.
+
+Currently, this functionality is only available in the `rc4` branch of the network,
+and while it will not be used in future versions, the core functionality will remain the same as in Casper1.x
+
+```go
+    parser, err := ces.NewParserWithVersion(rpcClient, []casper.Hash{contractHash}, ces.Casper2xRC4)
+    if err != nil {
+        panic(err)
+    }
+```
+
 ### Breaking changes
 
 In CES Go Parser 2.0.0, the `LoadContractMetadataWithoutSchema` function accepts a list of `NamedKeys`
@@ -89,9 +101,9 @@ and `ContractPackageHash` instead of `casper.Contract` it accepted previously:
 
 ```go
     contractMetadata, err := LoadContractMetadataWithoutSchema(contractPackageHash, addressableEntity.NamedKeys)
-	if err != nil {
-		return nil, err
-	}
+if err != nil {
+return nil, err
+}
 ```
 
 ## API
