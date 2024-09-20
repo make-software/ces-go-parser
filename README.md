@@ -101,9 +101,9 @@ and `ContractPackageHash` instead of `casper.Contract` it accepted previously:
 
 ```go
     contractMetadata, err := LoadContractMetadataWithoutSchema(contractPackageHash, addressableEntity.NamedKeys)
-if err != nil {
-return nil, err
-}
+    if err != nil {
+        return nil, err
+    }
 ```
 
 ## API
