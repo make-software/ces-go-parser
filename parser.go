@@ -35,6 +35,9 @@ type NetworkVersion uint
 const (
 	Casper1x NetworkVersion = iota
 	Casper2x
+	// Casper2xRC4 introduces smart contracts as AddressableEntities.
+	// In future versions, functionality will remain the same as in Casper1x.
+	Casper2xRC4
 )
 
 const (
@@ -227,7 +230,7 @@ func (p *EventParser) FetchContractSchemasBytes(contractHash casper.Hash) ([]byt
 		err              error
 	)
 
-	if p.networkVersion == Casper2x {
+	if p.networkVersion == Casper2xRC4 {
 		schemasURefValue, err = loadContractSchemasFromEntity(contractHash)
 		if err != nil {
 			log.Println("Error on fetching schemas bytes from addressable entity: ", err)
@@ -265,8 +268,8 @@ func (p *EventParser) loadContractsMetadata(contractHashes []casper.Hash, versio
 	loadMetadata := func(hash casper.Hash) {
 		errGroup.Go(func() error {
 			var contractMetadata *ContractMetadata
-			// try to load contract metadata as AddressableEntity in case of network version V2
-			if version == Casper2x {
+			// try to load contract metadata as AddressableEntity in case of network version V2 RC4
+			if version == Casper2xRC4 {
 				contractMetadata, err = p.loadContractMetadatAsAddressableEntity(ctx, hash)
 				if err != nil {
 					log.Println("Error on trying to load contract metadata from addressable entity: ", err)
