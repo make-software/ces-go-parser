@@ -84,8 +84,7 @@ soft-migration constructor that requires you to specify the network version you 
 
 You can also use a parser to process events emitted by `AddressableEntity` smart contracts.
 
-Currently, this functionality is only available in the `rc4` branch of the network,
-and while it will not be used in future versions, the core functionality will remain the same as in Casper1.x
+Currently, this functionality is only available in the `rc4` branch of the network, and while it will not be used in future versions, the core functionality will remain the same as in Casper1.x
 
 ```go
     parser, err := ces.NewParserWithVersion(rpcClient, []casper.Hash{contractHash}, ces.Casper2xRC4)
